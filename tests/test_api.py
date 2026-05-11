@@ -81,7 +81,7 @@ def test_create_consent_generates_sha256_hash() -> None:
 def test_car_status_and_dpcos_and_audit_log_behavior() -> None:
     car = client.get("/car/status")
     assert car.status_code == 200
-    assert "₦" == car.json()["currency"]
+    assert car.json()["currency"] == "₦"
 
     dpcos = client.get("/dpcos")
     assert dpcos.status_code == 200

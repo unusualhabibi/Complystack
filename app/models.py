@@ -105,8 +105,16 @@ class User(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     email: str
-    role: str
+    role: Literal["admin", "dpo", "auditor", "viewer"]
     mfa_enabled: bool
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        normalized = value.strip()
+        if "@" not in normalized or normalized.startswith("@") or normalized.endswith("@"):
+            raise ValueError("Invalid email format")
+        return normalized.lower()
 
 
 class AuditAction(str, Enum):
