@@ -79,6 +79,8 @@ def test_create_consent_generates_sha256_hash() -> None:
 
 
 def test_car_status_and_dpcos_and_audit_log_behavior() -> None:
+    initial_audit_count = len(store.audit_logs)
+
     car = client.get("/car/status")
     assert car.status_code == 200
     assert car.json()["currency"] == "₦"
@@ -87,6 +89,15 @@ def test_car_status_and_dpcos_and_audit_log_behavior() -> None:
     assert dpcos.status_code == 200
     assert len(dpcos.json()) >= 1
 
-    assert len(store.audit_logs) >= 3
-    first = store.audit_logs[0]
-    assert first.details["worm"] == "immutable"
+    consent = client.post(
+        "/consent",
+        json={
+            "organization_id": str(uuid4()),
+            "status": "granted",
+            "consent_payload": "audit-proof-check",
+        },
+    )
+    assert consent.status_code == 200
+    assert len(store.audit_logs) == initial_audit_count + 1
+    latest = store.audit_logs[-1]
+    assert latest.details["worm"] == "immutable"

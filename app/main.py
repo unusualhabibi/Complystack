@@ -25,14 +25,18 @@ class InMemoryStore:
         self.dpias: list[DPIA] = []
         self.breaches: list[BreachIncident] = []
         self.consents: list[ConsentRecord] = []
-        self.audit_logs: tuple[AuditLog, ...] = ()
+        self._audit_logs: list[AuditLog] = []
         self.dpcos: list[DPCO] = [
             DPCO(name="Lagos Data Trustees", ndpc_license_number="NDPC-DPCO-001", rating=4.7),
             DPCO(name="Abuja Privacy Partners", ndpc_license_number="NDPC-DPCO-002", rating=4.5),
         ]
 
     def append_audit(self, log: AuditLog) -> None:
-        self.audit_logs = (*self.audit_logs, log)
+        self._audit_logs.append(log)
+
+    @property
+    def audit_logs(self) -> tuple[AuditLog, ...]:
+        return tuple(self._audit_logs)
 
 
 store = InMemoryStore()
@@ -89,7 +93,12 @@ async def create_breach(
         regulators.append("ngCERT")
         trace.append("ngCERT triggered: cybersecurity incident indicators detected.")
 
-    unique_regulators = list(dict.fromkeys(regulators))
+    seen: set[RegulatorLiteral] = set()
+    unique_regulators: list[RegulatorLiteral] = []
+    for regulator in regulators:
+        if regulator not in seen:
+            seen.add(regulator)
+            unique_regulators.append(regulator)
 
     breach = BreachIncident(
         organization_id=payload.organization_id,
@@ -118,7 +127,7 @@ async def create_consent(
 
 @app.get("/car/status")
 async def get_car_status() -> dict[str, object]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(tz=timezone.utc)
     return {
         "generated_at": now.strftime("%d-%m-%Y %H:%M UTC"),
         "currency": "₦",

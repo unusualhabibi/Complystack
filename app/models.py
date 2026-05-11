@@ -132,7 +132,7 @@ class AuditLog(BaseModel):
     resource: str
     resource_id: str
     action: AuditAction
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
     details: dict[str, str] = Field(default_factory=dict)
 
 
