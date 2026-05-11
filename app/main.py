@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 
 from app.models import (
     AuditAction,
@@ -38,6 +38,12 @@ class InMemoryStore:
     def audit_logs(self) -> tuple[AuditLog, ...]:
         return tuple(self._audit_logs)
 
+    def reset(self) -> None:
+        self.dpias.clear()
+        self.breaches.clear()
+        self.consents.clear()
+        self._audit_logs.clear()
+
 
 store = InMemoryStore()
 app = FastAPI(title="ComplyStack NDPA API")
@@ -55,9 +61,6 @@ def _log_create(resource: str, resource_id: str, state: InMemoryStore) -> None:
 
 @app.post("/dpias", response_model=DPIA)
 async def create_dpia(payload: DPIACreateRequest, state: Annotated[InMemoryStore, Depends(get_store)]) -> DPIA:
-    if payload.cross_border and payload.data_localization_country.lower() != "nigeria":
-        raise HTTPException(status_code=400, detail="Sovereign data must stay in Nigeria under NCP 2025.")
-
     total = sum(abs(v) for v in payload.factors.values())
     if total == 0:
         shap_explanation = {"risk_score_baseline": round(payload.risk_score / 100, 4)}

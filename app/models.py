@@ -7,7 +7,7 @@ import re
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ConsentStatus(str, Enum):
@@ -24,7 +24,8 @@ class TIAStatus(str, Enum):
 
 SHA256_HEX_LENGTH = 64
 RegulatorLiteral = Literal["NDPC", "CBN", "NCC", "ngCERT"]
-EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
+NIGERIA_COUNTRY_NAME = "nigeria"
+EMAIL_REGEX = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
 
 
 class Organization(BaseModel):
@@ -114,7 +115,7 @@ class User(BaseModel):
     @classmethod
     def validate_email(cls, value: str) -> str:
         normalized = value.strip()
-        if not EMAIL_PATTERN.fullmatch(normalized):
+        if not EMAIL_REGEX.fullmatch(normalized):
             raise ValueError("Invalid email format")
         return normalized.lower()
 
@@ -158,6 +159,12 @@ class DPIACreateRequest(BaseModel):
     @classmethod
     def validate_country(cls, value: str) -> str:
         return value.strip()
+
+    @model_validator(mode="after")
+    def validate_sovereign_data_rules(self) -> "DPIACreateRequest":
+        if self.cross_border and self.data_localization_country.lower() != NIGERIA_COUNTRY_NAME:
+            raise ValueError("Sovereign data must stay in Nigeria under NCP 2025.")
+        return self
 
 
 class BreachCreateRequest(BaseModel):

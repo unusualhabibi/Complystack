@@ -1,11 +1,17 @@
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, store
 from app.models import SHA256_HEX_LENGTH
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def reset_store_state() -> None:
+    store.reset()
 
 
 def test_create_dpia_returns_shap_explanation() -> None:
@@ -39,8 +45,8 @@ def test_create_dpia_blocks_non_nigeria_cross_border_localization() -> None:
         },
     )
 
-    assert response.status_code == 400
-    assert "Nigeria" in response.json()["detail"]
+    assert response.status_code == 422
+    assert "Nigeria" in response.text
 
 
 def test_create_breach_classifies_regulators() -> None:
