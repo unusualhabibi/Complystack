@@ -15,6 +15,7 @@ from app.models import (
     DPIA,
     DPIACreateRequest,
     DPCO,
+    RegulatorLiteral,
     build_audit_hash,
 )
 
@@ -75,7 +76,7 @@ async def create_breach(
     payload: BreachCreateRequest,
     state: Annotated[InMemoryStore, Depends(get_store)],
 ) -> BreachIncident:
-    regulators: list[str] = ["NDPC"]
+    regulators: list[RegulatorLiteral] = ["NDPC"]
     trace: list[str] = ["NDPC triggered: personal data incident falls under NDPA oversight."]
 
     if payload.banking_impact or payload.sector.lower() in {"banking", "fintech"}:
@@ -88,9 +89,11 @@ async def create_breach(
         regulators.append("ngCERT")
         trace.append("ngCERT triggered: cybersecurity incident indicators detected.")
 
+    unique_regulators = list(dict.fromkeys(regulators))
+
     breach = BreachIncident(
         organization_id=payload.organization_id,
-        regulators_triggered=sorted(set(regulators)),
+        regulators_triggered=unique_regulators,
         xai_decision_trace=trace,
     )
     state.breaches.append(breach)
@@ -117,7 +120,7 @@ async def create_consent(
 async def get_car_status() -> dict[str, object]:
     now = datetime.now(timezone.utc)
     return {
-        "generated_at": now.strftime("%d-%m-%Y %H:%M"),
+        "generated_at": now.strftime("%d-%m-%Y %H:%M UTC"),
         "currency": "₦",
         "schedule": "GAID Schedule 2",
         "checklist": [

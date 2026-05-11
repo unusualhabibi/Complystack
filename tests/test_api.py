@@ -3,6 +3,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from app.main import app, store
+from app.models import SHA256_HEX_LENGTH
 
 client = TestClient(app)
 
@@ -74,7 +75,7 @@ def test_create_consent_generates_sha256_hash() -> None:
 
     assert response.status_code == 200
     audit_hash = response.json()["audit_hash"]
-    assert len(audit_hash) == 64
+    assert len(audit_hash) == SHA256_HEX_LENGTH
 
 
 def test_car_status_and_dpcos_and_audit_log_behavior() -> None:

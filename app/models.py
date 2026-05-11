@@ -21,6 +21,10 @@ class TIAStatus(str, Enum):
     rejected = "rejected"
 
 
+SHA256_HEX_LENGTH = 64
+RegulatorLiteral = Literal["NDPC", "CBN", "NCC", "ngCERT"]
+
+
 class Organization(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -47,7 +51,7 @@ class ConsentRecord(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     organization_id: UUID
     status: ConsentStatus
-    audit_hash: str = Field(min_length=64, max_length=64)
+    audit_hash: str = Field(min_length=SHA256_HEX_LENGTH, max_length=SHA256_HEX_LENGTH)
 
 
 class DPIA(BaseModel):
@@ -65,7 +69,7 @@ class BreachIncident(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     organization_id: UUID
-    regulators_triggered: list[Literal["NDPC", "CBN", "NCC", "ngCERT"]]
+    regulators_triggered: list[RegulatorLiteral]
     xai_decision_trace: list[str]
 
 
