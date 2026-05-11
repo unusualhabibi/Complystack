@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
+import re
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -23,6 +24,7 @@ class TIAStatus(str, Enum):
 
 SHA256_HEX_LENGTH = 64
 RegulatorLiteral = Literal["NDPC", "CBN", "NCC", "ngCERT"]
+EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
 
 
 class Organization(BaseModel):
@@ -112,7 +114,7 @@ class User(BaseModel):
     @classmethod
     def validate_email(cls, value: str) -> str:
         normalized = value.strip()
-        if "@" not in normalized or normalized.startswith("@") or normalized.endswith("@"):
+        if not EMAIL_PATTERN.fullmatch(normalized):
             raise ValueError("Invalid email format")
         return normalized.lower()
 
